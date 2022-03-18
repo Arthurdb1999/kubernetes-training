@@ -34,7 +34,7 @@ Docker Swarm, Rancher, Mesos, Amazon EC2, Google Anthos
 
 ## Arquitetura
 
-![Arquitetura do Kubernetes](./images/arquitetura_kubernetes.png)
+![Arquitetura do Kubernetes](../images/arquitetura_kubernetes.png)
 
 - Master Node: É o que gerencia tudo no cluster, e tem 3 componentes principais para isso: API Server, Scheduler e Controller Manager
 

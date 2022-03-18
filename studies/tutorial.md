@@ -128,3 +128,98 @@ Vamos usar um banco de dados MongoDB. Esse walkthrough está disponível na docu
 1. `kubectl create -f .\05_01\guestbook.yaml`
 
 2. Esperar os pods ficarem up, acessar a URL e fazer um teste: `minikube service frontend --url`
+
+## Dashboard
+
+Tudo que se faz pelo kubectl pode ser executado no dashboard.
+
+1. Abrir o dashboard: `minikube enable dashboard` & `minikube dashboard`
+
+## Configuration Data
+
+1. `kubectl create -f .\05_03\reader-deployment.yaml`
+
+Ao rodar um `kubectl logs` no pod, vemos que o `log_level` está com valor de erro, e queremos arrumar isso durante o deployment. Para isso precisamos criar uma configmap:
+
+2. `kubectl create configmap logger --from-literal=log_level=debug`
+
+O yaml do passo 3 utiliza o nome da configmap criada no passo 2 (logger) na variável `log_level`. Ou seja, adicionamos uma configmap em tempo de deployment.
+
+3. `kubectl create -f .\05_03\reader-configmap-deployment.yaml`
+
+4. Listar as configmaps: `kubectl get configmaps`
+
+5. Ver a especificação da configmap: `kubectl get configmap/logger -o yaml`
+
+## Application Secrets
+
+Utilizado para connections strings de banco de dados, por exemplo, ou informações sensíveis.
+
+Criamos uma secret do tipo `generic` de chave api_key e valor 123456789.
+
+1. `kubectl create secret generic apikey --from-literal=api_key=123456789`
+
+2. `kubectl get secrets/apikey -o yaml`
+
+No output do passo 2, pode ser observado que o valor de `apikey` está criptografado.
+
+3. `kubectl create -f .\05_04\secretreader-deployment.yaml`
+
+4. `kubectl logs secretreader-<hash>`
+
+## Jobs
+
+1. `kubectl create -f .\05_05\simplejob.yaml`
+
+2. `kubectl get jobs`
+
+O yaml deste recurso realiza um for e um print de números. Após fazer o deployment, basta visualizar os logs do pod para ver o output com a contagem de 9 até 1.
+
+### Cron Jobs
+
+A cronjob a seguir roda a cada minuto.
+
+1. `kubectl create -f .\05_05\cronjob.yaml`
+
+2. `kubectl get cronjobs`
+
+Se ficarmos rodarmos um `kubectl get jobs` a cada minuto, vemos que a cada minuto um novo `hellocron` é executado.
+
+3. Editar um cronjob: `kubectl edit cronjobs/hellocron` (se tiver um editor configurado)
+
+    - Se não tiver, pode editar pelo dashboard do minikube ou então assim:
+
+    - Setar o suspend para true, assim a cronjob não roda mais: `kubectl patch cronjobs hellocron -p '{\"spec\" : {\"suspend\" : true }}'`
+
+## DaemonSet
+
+Documentação oficial: A DaemonSet ensures that all (or some) Nodes run a copy of a Pod. As nodes are added to the cluster, Pods are added to them. As nodes are removed from the cluster, those Pods are garbage collected. Deleting a DaemonSet will clean up the Pods it created.
+
+Não entendi muito bem, mas vamo lá.
+
+1. `kubectl create -f .\05_06\daemonset.yaml`
+
+2. `kubectl get daemonsets`
+
+3. Adiciona uma label ao nodo do minikube: `kubectl label nodes/minikube infra=development --overwrite`
+
+4. Visualizar labels do nodo: `kubectl get nodes --show-labels`
+
+5. `kubectl create -f .\05_06\daemonset-infra-development.yaml`
+
+Agora, ao rodar um `get daemonsets`, podemos ver que ela está ativa, e pelo selector `infra=development`, ela foi atribuída ao nodo `minikube`
+
+6. `kubectl create -f .\05_06\daemonset-infra-prod.yaml`
+
+Agora, ao rodar um `get daemonsets`, podemos ver que o daemonset não está ativo, pois não há nenhum nodo com uma label `infra=production`.
+
+### StateFulSets
+
+Manage the deployment and scaling for a set of pods and provide guarantees about the ordering and the uniqueness of these pods
+
+O exemplo será feito com zookeeper, que é um armazenamento de chaves-valor.
+
+1. `kubectl create -f .\05_06\statefulset.yaml`
+
+2. `kubectl get statefulsets`
+
